@@ -104,7 +104,6 @@ void ReadSerial(String &ReadTagString)
         {
           RFIDReader.read();
         } 
-
       } 
       bytesread = 0;
       TagCode="";

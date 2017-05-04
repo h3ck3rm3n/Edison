@@ -33,14 +33,10 @@ float Rsensor;            // opornosc fotorezystora w kiloomach
 
 float temperatura() {
     int a = analogRead(temp1);
-    int b = analogRead(temp2);
     float R = 1023.0/((float)a)-1.0;
-    float R2 = 1023.0/((float)b)-1.0;
     R = 100000.0*R;
-    R2 = 100000.0*R2;
     float cels1=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//konwersja do temperatury ;
-    float cels2=1.0/(log(R2/100000.0)/B+1/298.15)-273.15;//konwersja do temperatury ;
-    Serial.print("temp 1|2: ");Serial.print(cels1);Serial.print("|");Serial.print(cels2);
+    Serial.print("temp");Serial.print(cels1);
     delay(100);
     return cels1;
 }

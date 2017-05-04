@@ -101,7 +101,7 @@ void setup() {
 
 String odczytkart() {
     digitalWrite(RFIDEnablePin, LOW);
-    i=0;
+    i=0; // -- nie wyzeruje się za każdym kolejnym tagiem? Czy tak ma być? I do czego to bo nie ogarniam
     while((i<=osobywklasie) || (stoplicz==true)) //dopuki nie zeskanuje wszystkich osób w klasie LUB nauczyciel nie wylaczy liczenia... -- do zmiany
     {
      if(RFIDReader.available() > 0) // Jesli jest sygnał ...

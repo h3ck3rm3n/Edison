@@ -1,5 +1,3 @@
-//RFID + trzeba dopisać kod do dalmierza
-//===================kopia=====================
 #include <SoftwareSerial.h>
 
 #define RFIDEnablePin 2 //Pin that enables reading. Set as OUTPUT and LOW to read an RFID tag
@@ -8,62 +6,53 @@
 //Using SoftwareSerial Library to locate the serial pins off the default set
 //This allows the Arduino to be updated via USB with no conflict
 #define RxPin 5 //Pin to read data from Reader 
-#define TxPin 4 //Pin to write data to the Reader NOTE: The reader doesn't get written to, don't connect this line.
+#define TxPin 13 //Pin to write data to the Reader NOTE: The reader doesn't get written to, don't connect this line. Ten pin nie będzie używany więc na razie niech ma numer 13.
 SoftwareSerial RFIDReader(RxPin,TxPin);
 
 String RFIDTAG=""; //Holds the RFID Code read from a tag
 String DisplayTAG = ""; //Holds the last displayed RFID Tag
-//===================kopia=====================
 
 int i=0;
-int const osobywklasie(35);
-int licznik = 0; //Pokazuje ile jest potwierdzonych uczniów w klasie.
+int const osobywklasie(35); //-- prawdopodobnie zbędne
+int licznik = 0; //Pokazuje ile jest potwierdzonych uczniów w klasie. //-- prawdopodobnie zbędne
 bool dalmierzpass = false; //zmienia się na true gdy uczeń przechodzi przez dalmierz
-bool kartapass = false; //zmienia się na true gdy uczeń skanuje kartę RFID
+bool kartapass = false; //zmienia się na true gdy uczeń skanuje kartę RFID //-- do czego to w ogóle jest? Nie jest użyte w jakikolwiek sposób
 int liczdal = 0; //licznik osób policzonych dalmierzem.
 int liczkart = 0; //licznik osób policzonych kartą.
 bool wlaczoneliczenie = true;
 String baza[osobywklasie];
-bool stoplicz= false; //wyłączenie liczenia przez nauczyciela
+bool stoplicz= false; //wyłączenie liczenia przez nauczyciela //-- zmienić na czasowy licznik, można zintegrować z wlaczliczenie
 
-void setup() {
-  RFIDReader.begin(RFIDSerialRate);
-  
-  pinMode(RFIDEnablePin,OUTPUT); 
+//MS
+const int B=4275;         // wartość B-constant termistora
+const int R0 = 100000;    // R0 = 100k
+const int temp1 = A5;     // Grove - Temperature Sensor pin A5
+const int temp2 = A4;     // Grove - Temperature Sensor pin A4
+const int fotoRes = A3;   // pin fotorezystora
+float Rsensor;            // opornosc fotorezystora w kiloomach
 
-  
-  
-  
+float temperatura() {
+    int a = analogRead(temp1);
+    int b = analogRead(temp2);
+    float R = 1023.0/((float)a)-1.0;
+    float R2 = 1023.0/((float)b)-1.0;
+    R = 100000.0*R;
+    R2 = 100000.0*R2;
+    float cels1=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//konwersja do temperatury ;
+    float cels2=1.0/(log(R2/100000.0)/B+1/298.15)-273.15;//konwersja do temperatury ;
+    Serial.print("temp 1|2: ");Serial.print(cels1);Serial.print("|");Serial.print(cels2);
+    delay(100);
+    return cels1;
 }
-
-void loop() {
-
-  if(wlaczoneliczenie==true)
-  {
-    digitalWrite(RFIDEnablePin, LOW);
-    i=0;
-    while((i<=osobywklasie) || (stoplicz==true)) //dopuki nie zeskanuje wszystkich osób w klasie LUB nauczyciel nie wylaczy liczenia...
-    {
-     if(RFIDReader.available() > 0) // Jesli jest sygnał ...
-     {
-       kartapass=true;
-       ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze.
-       baza[i]=RFIDTAG; //dodaje tag do bazy
-       liczkart++; //dolicza ucznia jako jednostke.
-       delay(1300);
-       i++;
-       kartapass=false;
-       RFIDTAG=""; //czysci już zliczony tag
-      
-     }
-    }
-    stoplicz=false; //wylacza opcje stopu nauczyciela wymuszajacego zakonczenie petli (jesli liczenie mialoby sie odbyc ponownie)
-  }
-
- 
-
+float jasnosc() {
+  int sensorValue = analogRead(fotoRes); 
+  Rsensor=(float)(1023-sensorValue)*10/sensorValue;
+  int lx = map(Rsensor, 0, 1023, 50, 1000);
+  return lx;
 }
+//MS
 
+//MW
 void ReadSerial(String &ReadTagString)
 {
   int bytesread = 0;
@@ -77,7 +66,7 @@ void ReadSerial(String &ReadTagString)
       while(bytesread<10) {                 // Read 10 digit code 
         if( RFIDReader.available() > 0) { 
           val = RFIDReader.read(); 
-          if((val == 10)||(val == 13)) {   // If header or stop bytes before the 10 digit reading 
+          if((val == 10)||(val == 13)) {   // If header or stop bytes before the 10 digit reading -- być może do edycji, sprawdzimy w działaniu
             break;                         // Stop reading 
           } 
           code[bytesread] = val;           // Add the digit           
@@ -101,4 +90,39 @@ void ReadSerial(String &ReadTagString)
       TagCode="";
     } 
   } 
+}
+//MW
+
+void setup() {
+  RFIDReader.begin(RFIDSerialRate);  
+  pinMode(RFIDEnablePin,OUTPUT);
+  Serial.begin(9600);
+}
+
+odczytkart() {
+    digitalWrite(RFIDEnablePin, LOW);
+    i=0;
+    while((i<=osobywklasie) || (stoplicz==true)) //dopuki nie zeskanuje wszystkich osób w klasie LUB nauczyciel nie wylaczy liczenia... -- do zmiany
+    {
+     if(RFIDReader.available() > 0) // Jesli jest sygnał ...
+     {
+       kartapass=true;
+       ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze. -- zapisać do tymczasowego stringa, przesłać, wyczyścić stringa
+       baza[i]=RFIDTAG; //dodaje tag do bazy -- jak wyżej, o to mi chodziło, przed skasowaniem wysłać
+       liczkart++; //dolicza ucznia jako jednostke.
+       delay(1300); //-- potrzebny ten delay? jeżeli wykryje kartę to ją odczytuje, zapisuje, wysyła, czyści, mikrosekundy. Przemyśl
+       i++;
+       kartapass=false;
+       RFIDTAG=""; //czysci już zliczony tag
+       return DisplayTAG;
+     }
+    }
+    stoplicz=false; //wylacza opcje stopu nauczyciela wymuszajacego zakonczenie petli (jesli liczenie mialoby sie odbyc ponownie) -- przerzut do liczenia czasowego?
+}
+
+void loop() {
+
+  if(wlaczoneliczenie==true)
+  { odczytkart(); }
+
 }

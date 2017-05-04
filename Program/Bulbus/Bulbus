@@ -99,7 +99,7 @@ void setup() {
   Serial.begin(9600);
 }
 
-odczytkart() {
+String odczytkart() {
     digitalWrite(RFIDEnablePin, LOW);
     i=0;
     while((i<=osobywklasie) || (stoplicz==true)) //dopuki nie zeskanuje wszystkich osób w klasie LUB nauczyciel nie wylaczy liczenia... -- do zmiany

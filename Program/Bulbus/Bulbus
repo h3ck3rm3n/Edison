@@ -1,11 +1,14 @@
+//Wykorzystane piny
+//13,12,2,A5,A4
+
 #include <SoftwareSerial.h>
 
-#define RFIDEnablePin 2 //Pin that enables reading. Set as OUTPUT and LOW to read an RFID tag
+#define RFIDEnablePin 12 //Pin that enables reading. Set as OUTPUT and LOW to read an RFID tag
 #define RFIDSerialRate 2400 //Parallax RFID Reader Serial Port Speed
 
 //Using SoftwareSerial Library to locate the serial pins off the default set
 //This allows the Arduino to be updated via USB with no conflict
-#define RxPin 5 //Pin to read data from Reader 
+#define RxPin 2 //Pin to read data from Reader 
 #define TxPin 13 //Pin to write data to the Reader NOTE: The reader doesn't get written to, don't connect this line. Ten pin nie będzie używany więc na razie niech ma numer 13.
 SoftwareSerial RFIDReader(RxPin,TxPin);
 

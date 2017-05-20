@@ -52,26 +52,7 @@ float jasnosc() {
 //MS
 
 //MW
-String odczytkart() {
-    digitalWrite(RFIDEnablePin, LOW);
-    i=0; // -- nie wyzeruje się za każdym kolejnym tagiem? Czy tak ma być? I do czego to bo nie ogarniam
-    while((i<=osobywklasie) || (stoplicz==true)) //dopuki nie zeskanuje wszystkich osób w klasie LUB nauczyciel nie wylaczy liczenia... -- do zmiany
-    {
-     if(RFIDReader.available() > 0) // Jesli jest sygnał ...
-     {
-       kartapass=true;
-       ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze. -- zapisać do tymczasowego stringa, przesłać, wyczyścić stringa
-       baza[i]=RFIDTAG; //dodaje tag do bazy -- jak wyżej, o to mi chodziło, przed skasowaniem wysłać
-       liczkart++; //dolicza ucznia jako jednostke.
-       delay(1300); //-- potrzebny ten delay? jeżeli wykryje kartę to ją odczytuje, zapisuje, wysyła, czyści, mikrosekundy. Przemyśl
-       i++;
-       kartapass=false;
-       RFIDTAG=""; //czysci już zliczony tag
-       return DisplayTAG;
-     }
-    }
-    stoplicz=false; //wylacza opcje stopu nauczyciela wymuszajacego zakonczenie petli (jesli liczenie mialoby sie odbyc ponownie) -- przerzut do liczenia czasowego?
-}
+
 
 void ReadSerial(String &ReadTagString)
 {
@@ -116,11 +97,19 @@ void setup() {
   RFIDReader.begin(RFIDSerialRate);  
   pinMode(RFIDEnablePin,OUTPUT);
   Serial.begin(9600);
+  digitalWrite(RFIDEnablePin, LOW);
 }
 
 void loop() {
 
-  if(wlaczoneliczenie==true)
-  { odczytkart(); }
+  if(RFIDReader.available() > 0){
+     ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze. -- zapisać do tymczasowego stringa, przesłać, wyczyścić stringa
+     baza[i]=RFIDTAG; //dodaje tag do bazy -- jak wyżej, o to mi chodziło, przed skasowaniem wysłać
+     liczkart++; //dolicza ucznia jako jednostke.
+     i++; //ta zmienna po 15 minutach musi się równać 0, a baza danych TAG'ów musi być wyczyszczona. - do zrobienia.
+     RFIDTAG=""; //czysci już zliczony tag
+  }
+
+
 
 }

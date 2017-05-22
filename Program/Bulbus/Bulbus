@@ -1,30 +1,36 @@
-//Wykorzystane piny
-//13,12,2,A5,A4
+//Wypowiedzi MS oznaczone -> ##
+//Wypowiedzi MS oznaczone ->
 
-#include <SoftwareSerial.h>
+//Wykorzystane piny (oprócz 7)
+//13,12,11,10,9,2,A5,A4
 
 #define RFIDEnablePin 12 //Pin that enables reading. Set as OUTPUT and LOW to read an RFID tag
 #define RFIDSerialRate 2400 //Parallax RFID Reader Serial Port Speed
 
-//Using SoftwareSerial Library to locate the serial pins off the default set
-//This allows the Arduino to be updated via USB with no conflict
-#define RxPin 2 //Pin to read data from Reader 
-#define TxPin 13 //Pin to write data to the Reader NOTE: The reader doesn't get written to, don't connect this line. Ten pin nie będzie używany więc na razie niech ma numer 13.
-SoftwareSerial RFIDReader(RxPin,TxPin);
+#define czujka 11
+#define darlington 10
+#define przekaznik 9
 
+//MW ##Ogarnij to cu jest nie potrzebne
 String RFIDTAG=""; //Holds the RFID Code read from a tag
 String DisplayTAG = ""; //Holds the last displayed RFID Tag
 
 int i=0;
-int const osobywklasie(35); //-- prawdopodobnie zbędne
-int licznik = 0; //Pokazuje ile jest potwierdzonych uczniów w klasie. //-- prawdopodobnie zbędne
+int const osobywklasie(35); //## prawdopodobnie zbędne
+int licznik = 0; //Pokazuje ile jest potwierdzonych uczniów w klasie. //## prawdopodobnie zbędne
 bool dalmierzpass = false; //zmienia się na true gdy uczeń przechodzi przez dalmierz
-bool kartapass = false; //zmienia się na true gdy uczeń skanuje kartę RFID //-- do czego to w ogóle jest? Nie jest użyte w jakikolwiek sposób
+bool kartapass = false; //zmienia się na true gdy uczeń skanuje kartę RFID //## do czego to w ogóle jest? Nie jest użyte w jakikolwiek sposób
 int liczdal = 0; //licznik osób policzonych dalmierzem.
 int liczkart = 0; //licznik osób policzonych kartą.
 bool wlaczoneliczenie = true;
 String baza[osobywklasie];
-bool stoplicz= false; //wyłączenie liczenia przez nauczyciela //-- zmienić na czasowy licznik, można zintegrować z wlaczliczenie
+bool stoplicz= false; //wyłączenie liczenia przez nauczyciela //## zmienić na czasowy licznik, można zintegrować z wlaczliczenie
+
+//timer
+unsigned long currentMillis = 0;
+unsigned long previousMillis = 0;
+long interval = 1000; //interwal 1-sekundowy
+//MW
 
 //MS
 const int B=4275;         // wartość B-constant termistora
@@ -33,6 +39,8 @@ const int temp1 = A5;     // Grove - Temperature Sensor pin A5
 const int temp2 = A4;     // Grove - Temperature Sensor pin A4
 const int fotoRes = A3;   // pin fotorezystora
 float Rsensor;            // opornosc fotorezystora w kiloomach
+
+int tryb;
 
 float temperatura() {
     int a = analogRead(temp1);
@@ -61,13 +69,13 @@ void ReadSerial(String &ReadTagString)
   char code[10];
   String TagCode="";
 
-  if(RFIDReader.available() > 0) {          // If data available from reader 
-    if((val = RFIDReader.read()) == 10) {   // Check for header 
+  if(Serial1.available() > 0) {          // If data available from reader 
+    if((val = Serial1.read()) == 10) {   // Check for header 
       bytesread = 0; 
       while(bytesread<10) {                 // Read 10 digit code 
-        if( RFIDReader.available() > 0) { 
-          val = RFIDReader.read(); 
-          if((val == 10)||(val == 13)) {   // If header or stop bytes before the 10 digit reading -- być może do edycji, sprawdzimy w działaniu
+        if( Serial1.available() > 0) { 
+          val = Serial1.read(); 
+          if((val == 10)||(val == 13)) {   // If header or stop bytes before the 10 digit reading ## być może do edycji, sprawdzimy w działaniu
             break;                         // Stop reading 
           } 
           code[bytesread] = val;           // Add the digit           
@@ -81,9 +89,9 @@ void ReadSerial(String &ReadTagString)
           TagCode += code[x];
         }
         ReadTagString = TagCode;          //Update the caller
-        while(RFIDReader.available() > 0) //Burn off any characters still in the buffer
+        while(Serial1.available() > 0) //Burn off any characters still in the buffer
         {
-          RFIDReader.read();
+          Serial1.read();
         } 
       } 
       bytesread = 0;
@@ -91,25 +99,35 @@ void ReadSerial(String &ReadTagString)
     } 
   } 
 }
-//MW
 
-void setup() {
-  RFIDReader.begin(RFIDSerialRate);  
-  pinMode(RFIDEnablePin,OUTPUT);
-  Serial.begin(9600);
-  digitalWrite(RFIDEnablePin, LOW);
-}
-
-void loop() {
-
-  if(RFIDReader.available() > 0){
-     ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze. -- zapisać do tymczasowego stringa, przesłać, wyczyścić stringa
-     baza[i]=RFIDTAG; //dodaje tag do bazy -- jak wyżej, o to mi chodziło, przed skasowaniem wysłać
+String odczytkart() {
+   if(Serial1.available() > 0){
+     ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze. ## zapisać do tymczasowego stringa, przesłać, wyczyścić stringa
+     baza[i]=RFIDTAG; //dodaje tag do bazy ## jak wyżej, o to mi chodziło, przed skasowaniem wysłać
      liczkart++; //dolicza ucznia jako jednostke.
      i++; //ta zmienna po 15 minutach musi się równać 0, a baza danych TAG'ów musi być wyczyszczona. - do zrobienia.
      RFIDTAG=""; //czysci już zliczony tag
-  }
+     }
+}
+
+//MW
+
+void setup() {
+  Serial1.begin(RFIDSerialRate);  
+  pinMode(RFIDEnablePin,OUTPUT);
+  pinMode(czujka, INPUT);
+  Serial.begin(9600);
+  digitalWrite(RFIDEnablePin, LOW);
+  tryb=1;
+}
+
+void loop() {
+    odczytkart();
 
 
-
+    //timer - musi tak tu byc, musi byc na samym koncu loopa.
+    currentMillis = millis();
+    if(currentMillis - previousMillis > interval) {
+      previousMillis = currentMillis;
+    }
 }

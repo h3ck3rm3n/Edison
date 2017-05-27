@@ -17,8 +17,10 @@
 #include "LCD_RGB_Suli.h"
 I2C i2c(P0_5, P0_4);        //MW - inicjalizacja RGB
 
-//button
-#define exitbutton 14
+
+#define exitbutton 14 //button
+#define poten a0 //potencjometr
+
 //MW ##Ogarnij to cu jest nie potrzebne
 bool menustart=true; //teraz włączone- gdy prawda, uruchamia funkcję menu.
 String RFIDTAG=""; //Holds the RFID Code read from a tag
@@ -71,12 +73,58 @@ float jasnosc() {
 void Menu() {
     while(exitbutton==1)
     {
+     int pot = analogRead(0);
+     pot = map(pot, 0, 1023, 0, 5);  
      float tempdisp=temperatura();
      float jasdisp=jasnosc();
-     rgb_lcd_print("Temperatura: ",tempdisp);           //display  the  string
-     rgb_lcd_setCursor(0, 1);
-     rgb_lcd_print("Jasnosc: ",jasdisp);
+        switch( pot )
+        {
+        case 0:
+        rgb_lcd_clear();
+        rgb_lcd_setCursor(0, 0);
+        rgb_lcd_print("Temperatura: ",tempdisp);
+        rgb_lcd_setCursor(0, 1);
+        rgb_lcd_print("Jasnosc: ",jasdisp);
+        break;
+        case 1:
+        rgb_lcd_clear();
+        rgb_lcd_setCursor(0, 0);
+        rgb_lcd_print("Jasnosc: ",jasdisp);
+        rgb_lcd_setCursor(0, 1);
+        rgb_lcd_print("Grubas: ");
+        break;
+        case 2:
+        rgb_lcd_clear();
+        rgb_lcd_setCursor(0, 0);
+        rgb_lcd_print("Grubas: ");
+        rgb_lcd_setCursor(0, 1);
+        rgb_lcd_print("Start ");
+        break;  
+        case 3:
+        rgb_lcd_clear();
+        rgb_lcd_setCursor(0, 0);
+        rgb_lcd_print("Start ");
+        rgb_lcd_setCursor(0, 1);
+        rgb_lcd_print(":::>");
+        break; 
+        case 4:
+        rgb_lcd_clear();
+        rgb_lcd_setCursor(0, 0);
+        rgb_lcd_print(":::>");
+        rgb_lcd_setCursor(0, 1);
+        rgb_lcd_print("Herezja");
+        break; 
+        case 5:
+        rgb_lcd_clear();
+        rgb_lcd_setCursor(0, 0);
+        rgb_lcd_print("Herezja");
+        rgb_lcd_setCursor(0, 1);
+        rgb_lcd_print("Pierogi z miesem");
+        break; 
+        }
+     
     }
+    rgb_lcd_clear();
 }
 
 void ReadSerial(String &ReadTagString)
@@ -136,6 +184,7 @@ void setup() {
   Serial.begin(9600);
   digitalWrite(RFIDEnablePin, LOW);
   pinMode(exitbutton, INPUT);
+  pinMode(poten, INPUT);
   tryb=1;
    
    rgb_lcd_init((&i2c), 16, 2, LCD_5x8DOTS);    //initialize the module 

@@ -7,11 +7,20 @@
 #define RFIDEnablePin 12 //Pin that enables reading. Set as OUTPUT and LOW to read an RFID tag
 #define RFIDSerialRate 2400 //Parallax RFID Reader Serial Port Speed
 
+
 #define czujka 11
 #define darlington 10
 #define przekaznik 9
 
+#include "mbed.h"
+#include "Suli.h"
+#include "LCD_RGB_Suli.h"
+I2C i2c(P0_5, P0_4);        //MW - inicjalizacja RGB
+
+//button
+#define exitbutton 14
 //MW ##Ogarnij to cu jest nie potrzebne
+bool menustart=true; //teraz włączone- gdy prawda, uruchamia funkcję menu.
 String RFIDTAG=""; //Holds the RFID Code read from a tag
 String DisplayTAG = ""; //Holds the last displayed RFID Tag
 
@@ -19,7 +28,6 @@ int i=0;
 int const osobywklasie(35); //## prawdopodobnie zbędne
 int licznik = 0; //Pokazuje ile jest potwierdzonych uczniów w klasie. //## prawdopodobnie zbędne
 bool dalmierzpass = false; //zmienia się na true gdy uczeń przechodzi przez dalmierz
-bool kartapass = false; //zmienia się na true gdy uczeń skanuje kartę RFID //## do czego to w ogóle jest? Nie jest użyte w jakikolwiek sposób
 int liczdal = 0; //licznik osób policzonych dalmierzem.
 int liczkart = 0; //licznik osób policzonych kartą.
 bool wlaczoneliczenie = true;
@@ -60,7 +68,16 @@ float jasnosc() {
 //MS
 
 //MW
-
+void Menu() {
+    while(exitbutton==1)
+    {
+     float tempdisp=temperatura();
+     float jasdisp=jasnosc();
+     rgb_lcd_print("Temperatura: ",tempdisp);           //display  the  string
+     rgb_lcd_setCursor(0, 1);
+     rgb_lcd_print("Jasnosc: ",jasdisp);
+    }
+}
 
 void ReadSerial(String &ReadTagString)
 {
@@ -118,13 +135,21 @@ void setup() {
   pinMode(czujka, INPUT);
   Serial.begin(9600);
   digitalWrite(RFIDEnablePin, LOW);
+  pinMode(exitbutton, INPUT);
   tryb=1;
+   
+   rgb_lcd_init((&i2c), 16, 2, LCD_5x8DOTS);    //initialize the module 
+   rgb_lcd_setRGB(50, 0, 0);                 //set the color  
+   rgb_lcd_setCursor(0, 0);                //set the position of cursor
+  
 }
 
 void loop() {
     odczytkart();
-
-
+    
+    if(menustart=true){
+      Menu();
+    }
     //timer - musi tak tu byc, musi byc na samym koncu loopa.
     currentMillis = millis();
     if(currentMillis - previousMillis > interval) {

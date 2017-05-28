@@ -1,67 +1,34 @@
-//Wypowiedzi MS oznaczone -> ##
-//Wypowiedzi MS oznaczone ->
-
 //Wykorzystane piny (oprócz 7)
-//13,12,11,10,9,2,A5,A4
+//11,10,9,14(A0),15(A1),16(A2)
 
-#define RFIDEnablePin 12 //Pin that enables reading. Set as OUTPUT and LOW to read an RFID tag
-#define RFIDSerialRate 2400 //Parallax RFID Reader Serial Port Speed
-
-
-#define czujka 11
-#define darlington 10
 #define przekaznik 9
+#define darlington 10
+#define czujka 11
+#define poten 14
+#define fotoRes 15
+#define therm 16
 
-#include "mbed.h"
-#include "Suli.h"
-#include "LCD_RGB_Suli.h"
-I2C i2c(P0_5, P0_4);        //MW - inicjalizacja RGB
+#include <Wire.h>
+#include <rgb_lcd.h> 
+rgb_lcd lcd;
 
-
-#define exitbutton 14 //button
-#define poten a0 //potencjometr
-
-//MW ##Ogarnij to cu jest nie potrzebne
+//MW 
 bool menustart=true; //teraz włączone- gdy prawda, uruchamia funkcję menu.
-String RFIDTAG=""; //Holds the RFID Code read from a tag
-String DisplayTAG = ""; //Holds the last displayed RFID Tag
-
-int i=0;
-int const osobywklasie(35); //## prawdopodobnie zbędne
-int licznik = 0; //Pokazuje ile jest potwierdzonych uczniów w klasie. //## prawdopodobnie zbędne
-bool dalmierzpass = false; //zmienia się na true gdy uczeń przechodzi przez dalmierz
-int liczdal = 0; //licznik osób policzonych dalmierzem.
-int liczkart = 0; //licznik osób policzonych kartą.
-bool wlaczoneliczenie = true;
-String baza[osobywklasie];
-bool stoplicz= false; //wyłączenie liczenia przez nauczyciela //## zmienić na czasowy licznik, można zintegrować z wlaczliczenie
-
-//timer
-unsigned long currentMillis = 0;
-unsigned long previousMillis = 0;
-long interval = 1000; //interwal 1-sekundowy
 //MW
 
 //MS
-const int B=4275;         // wartość B-constant termistora
-const int R0 = 100000;    // R0 = 100k
-const int temp1 = A5;     // Grove - Temperature Sensor pin A5
-const int temp2 = A4;     // Grove - Temperature Sensor pin A4
-const int fotoRes = A3;   // pin fotorezystora
 float Rsensor;            // opornosc fotorezystora w kiloomach
 
-int tryb;
-
-float temperatura() {
-    int a = analogRead(temp1);
-    float R = 1023.0/((float)a)-1.0;
-    R = 100000.0*R;
-    float cels1=1.0/(log(R/100000.0)/B+1/298.15)-273.15;//konwersja do temperatury ;
-    Serial.print("temp");Serial.print(cels1);
-    delay(100);
-    return cels1;
+double temps() {
+ double Temp;
+ int RawADC = analogRead(therm);
+ Temp = log(10000.0*((1024.0/RawADC-1)));
+//         =log(10000.0/(1024.0/RawADC-1)) // for pull-up configuration
+ Temp = 1 / (0.001129148 + (0.000234125 + (0.0000000876741 * Temp * Temp ))* Temp );
+ Temp = Temp - 273.15;            // Convert Kelvin to Celcius
+ return Temp;
 }
-float jasnosc() {
+float lux() {
   int sensorValue = analogRead(fotoRes); 
   Rsensor=(float)(1023-sensorValue)*10/sensorValue;
   int lx = map(Rsensor, 0, 1023, 50, 1000);
@@ -71,137 +38,62 @@ float jasnosc() {
 
 //MW
 void Menu() {
-    while(exitbutton==1)
-    {
-     int pot = analogRead(0);
-     pot = map(pot, 0, 1023, 0, 5);  
-     float tempdisp=temperatura();
-     float jasdisp=jasnosc();
-        switch( pot )
+     int pot = analogRead(poten);
+     pot = map(pot, 0, 1023, 0, 4);  
+        switch(pot)
         {
         case 0:
-        rgb_lcd_clear();
-        rgb_lcd_setCursor(0, 0);
-        rgb_lcd_print("Temperatura: ",tempdisp);
-        rgb_lcd_setCursor(0, 1);
-        rgb_lcd_print("Jasnosc: ",jasdisp);
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Temperatura: ");
+        lcd.print(temps());
+        lcd.setCursor(0, 1);
+        lcd.print("Jasnosc: ");
+        lcd.print(lux());
         break;
         case 1:
-        rgb_lcd_clear();
-        rgb_lcd_setCursor(0, 0);
-        rgb_lcd_print("Jasnosc: ",jasdisp);
-        rgb_lcd_setCursor(0, 1);
-        rgb_lcd_print("Grubas: ");
-        break;
-        case 2:
-        rgb_lcd_clear();
-        rgb_lcd_setCursor(0, 0);
-        rgb_lcd_print("Grubas: ");
-        rgb_lcd_setCursor(0, 1);
-        rgb_lcd_print("Start ");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Grubas: ");
+        lcd.setCursor(0, 1);
+        lcd.print("Start ");
         break;  
+        case 2:
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print(":::>");
+        lcd.setCursor(0, 1);
+        lcd.print("Herezja");
+        break; 
         case 3:
-        rgb_lcd_clear();
-        rgb_lcd_setCursor(0, 0);
-        rgb_lcd_print("Start ");
-        rgb_lcd_setCursor(0, 1);
-        rgb_lcd_print(":::>");
-        break; 
-        case 4:
-        rgb_lcd_clear();
-        rgb_lcd_setCursor(0, 0);
-        rgb_lcd_print(":::>");
-        rgb_lcd_setCursor(0, 1);
-        rgb_lcd_print("Herezja");
-        break; 
-        case 5:
-        rgb_lcd_clear();
-        rgb_lcd_setCursor(0, 0);
-        rgb_lcd_print("Herezja");
-        rgb_lcd_setCursor(0, 1);
-        rgb_lcd_print("Pierogi z miesem");
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Maslo do ciecia");
+        lcd.setCursor(0, 1);
+        lcd.print("Pierogi z miesem");
         break; 
         }
-     
-    }
-    rgb_lcd_clear();
+    delay(1);
 }
 
-void ReadSerial(String &ReadTagString)
-{
-  int bytesread = 0;
-  int  val = 0; 
-  char code[10];
-  String TagCode="";
-
-  if(Serial1.available() > 0) {          // If data available from reader 
-    if((val = Serial1.read()) == 10) {   // Check for header 
-      bytesread = 0; 
-      while(bytesread<10) {                 // Read 10 digit code 
-        if( Serial1.available() > 0) { 
-          val = Serial1.read(); 
-          if((val == 10)||(val == 13)) {   // If header or stop bytes before the 10 digit reading ## być może do edycji, sprawdzimy w działaniu
-            break;                         // Stop reading 
-          } 
-          code[bytesread] = val;           // Add the digit           
-          bytesread++;                     // Ready to read next digit  
-        } 
-      } 
-      if(bytesread == 10) {                // If 10 digit read is complete 
-
-        for(int x=0;x<10;x++)              //Copy the Chars to a String
-        {
-          TagCode += code[x];
-        }
-        ReadTagString = TagCode;          //Update the caller
-        while(Serial1.available() > 0) //Burn off any characters still in the buffer
-        {
-          Serial1.read();
-        } 
-      } 
-      bytesread = 0;
-      TagCode="";
-    } 
-  } 
-}
-
-String odczytkart() {
-   if(Serial1.available() > 0){
-     ReadSerial(RFIDTAG); //narazie tylko czyta tag... nie wiem jak go zapisać w chmurze. ## zapisać do tymczasowego stringa, przesłać, wyczyścić stringa
-     baza[i]=RFIDTAG; //dodaje tag do bazy ## jak wyżej, o to mi chodziło, przed skasowaniem wysłać
-     liczkart++; //dolicza ucznia jako jednostke.
-     i++; //ta zmienna po 15 minutach musi się równać 0, a baza danych TAG'ów musi być wyczyszczona. - do zrobienia.
-     RFIDTAG=""; //czysci już zliczony tag
-     }
-}
 
 //MW
 
 void setup() {
-  Serial1.begin(RFIDSerialRate);  
-  pinMode(RFIDEnablePin,OUTPUT);
-  pinMode(czujka, INPUT);
-  Serial.begin(9600);
-  digitalWrite(RFIDEnablePin, LOW);
-  pinMode(exitbutton, INPUT);
-  pinMode(poten, INPUT);
-  tryb=1;
+   pinMode(czujka, INPUT);
+   Serial.begin(9600);
+   pinMode(14, INPUT);
+   pinMode(15, INPUT);
+   pinMode(16, INPUT);
    
-   rgb_lcd_init((&i2c), 16, 2, LCD_5x8DOTS);    //initialize the module 
-   rgb_lcd_setRGB(50, 0, 0);                 //set the color  
-   rgb_lcd_setCursor(0, 0);                //set the position of cursor
-  
+   lcd.begin(16, 2); //initialize the module 
+   lcd.setRGB(60, 60, 200);                 //set the color  
+   lcd.setCursor(0, 0);                //set the position of cursor
+   lcd.print("ok.");
+   delay(500);  
 }
 
 void loop() {
-    odczytkart();
-    
-    if(menustart=true){
-      Menu();
-    }
-    //timer - musi tak tu byc, musi byc na samym koncu loopa.
-    currentMillis = millis();
-    if(currentMillis - previousMillis > interval) {
-      previousMillis = currentMillis;
-    }
+  Menu();
+  delay(500);
 }

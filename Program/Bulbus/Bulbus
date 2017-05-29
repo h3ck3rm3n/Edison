@@ -1,5 +1,5 @@
 //Wykorzystane piny (oprócz 7)
-//11,10,9,14(A0),15(A1),16(A2)
+//11,10,9,14(A0),15(A1),16(A2),18(A4)
 
 #define przekaznik 9
 #define darlington 10
@@ -7,6 +7,8 @@
 #define poten 14
 #define fotoRes 15
 #define therm 16
+#define dal 18
+#define button 8
 
 #include <Wire.h>
 #include <rgb_lcd.h> 
@@ -17,7 +19,19 @@ bool menustart=true; //teraz włączone- gdy prawda, uruchamia funkcję menu.
 //MW
 
 //MS
+int state = HIGH;
+int reading;
+int previous = LOW;
+unsigned long time = 0;
+long debounce = 200; 
+const long interval = 120000;
+float treshold = 0.6;
 float Rsensor;            // opornosc fotorezystora w kiloomach
+
+unsigned long previousMillis = 0;
+long timeInterval = 1000;
+int sec = 0;
+int offTime = 0;
 
 double temps() {
  double Temp;
@@ -28,12 +42,57 @@ double temps() {
  Temp = Temp - 273.15;            // Convert Kelvin to Celcius
  return Temp;
 }
+
 float lux() {
   int sensorValue = analogRead(fotoRes); 
   Rsensor=(float)(1023-sensorValue)*10/sensorValue;
   int lx = map(Rsensor, 0, 1023, 50, 1000);
   return lx;
 }
+
+int dalmierz() {
+	int odl = analogRead(dal);
+	int odl = map(odl 0, 1023, 0, 150);
+	return odl;
+}
+
+void ruch(); {
+	float darl = analogRead(darlington);
+	reading = digitalRead(button);
+	unsigned long currentMillis = millis();
+	if (currentMillis - previousMillis >= timeInterval) {
+		previousMillis = currentMillis;
+		sec++;
+	} else {
+		return;
+	}		
+	
+	if (czujka==LOW && currentMillis - previousMillis >= timeInterval) {
+		offTime++;
+	} else {
+		return;
+	}
+		
+	if (czujka==LOW && offTime >3 && darl>=treshold && sec >=120 ) {
+		digitalWrite(przekaznik, LOW);
+		sec = 0;
+		offTime = 0;
+	} else {
+		digitalWrite(przekaznik,HIGH);
+	}
+	if(reading == HIGH && previous == LOW && millis() - time > debounce) {
+		if (state == HIGH)	{
+			state = LOW;
+		} else {
+			state = HIGH;
+
+		time = millis();
+		}
+	digitalWrite(przekaznik, state);
+	previous = reading;
+	}
+}
+
 //MS
 
 //MW
@@ -85,6 +144,11 @@ void setup() {
    pinMode(14, INPUT);
    pinMode(15, INPUT);
    pinMode(16, INPUT);
+   pinMode(18, INPUT);
+   pinMode(11, INPUT);
+   pinMode(10, INPUT);
+   pinMode(9, OUTPUT);
+   pinMode(8, INPUT);
    
    lcd.begin(16, 2); //initialize the module 
    lcd.setRGB(60, 60, 200);                 //set the color  

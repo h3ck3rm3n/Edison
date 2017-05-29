@@ -51,46 +51,46 @@ float lux() {
 }
 
 int dalmierz() {
-	int odl = analogRead(dal);
-	int odl = map(odl 0, 1023, 0, 150);
-	return odl;
+  int odl = analogRead(dal);
+  odl = map(odl, 0, 1023, 0, 150);
+  return odl;
 }
 
-void ruch(); {
-	float darl = analogRead(darlington);
-	reading = digitalRead(button);
-	unsigned long currentMillis = millis();
-	if (currentMillis - previousMillis >= timeInterval) {
-		previousMillis = currentMillis;
-		sec++;
-	} else {
-		return;
-	}		
-	
-	if (czujka==LOW && currentMillis - previousMillis >= timeInterval) {
-		offTime++;
-	} else {
-		return;
-	}
-		
-	if (czujka==LOW && offTime >3 && darl>=treshold && sec >=120 ) {
-		digitalWrite(przekaznik, LOW);
-		sec = 0;
-		offTime = 0;
-	} else {
-		digitalWrite(przekaznik,HIGH);
-	}
-	if(reading == HIGH && previous == LOW && millis() - time > debounce) {
-		if (state == HIGH)	{
-			state = LOW;
-		} else {
-			state = HIGH;
+void ruch() {
+  float darl = analogRead(darlington);
+  reading = digitalRead(button);
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= timeInterval) {
+    previousMillis = currentMillis;
+    sec++;
+  } else {
+    return;
+  }   
+  
+  if (czujka==LOW && currentMillis - previousMillis >= timeInterval) {
+    offTime++;
+  } else {
+    return;
+  }
+    
+  if (czujka==LOW && offTime >3 && darl>=treshold && sec >=120 ) {
+    digitalWrite(przekaznik, LOW);
+    sec = 0;
+    offTime = 0;
+  } else {
+    digitalWrite(przekaznik,HIGH);
+  }
+  if(reading == HIGH && previous == LOW && millis() - time > debounce) {
+    if (state == HIGH)  {
+      state = LOW;
+    } else {
+      state = HIGH;
 
-		time = millis();
-		}
-	digitalWrite(przekaznik, state);
-	previous = reading;
-	}
+    time = millis();
+    }
+  digitalWrite(przekaznik, state);
+  previous = reading;
+  }
 }
 
 //MS

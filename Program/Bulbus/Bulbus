@@ -4,7 +4,7 @@
 #define poten 14
 #define fotoRes 15
 #define therm 16
-#define dal 18
+#define dalmierz 18
 #define button1 10
 #define buzz 11
 
@@ -17,17 +17,16 @@ unsigned long previousMillis = 0;
 const long menuInterval = 500;
 
 void setup() {
-   pinMode(czujka, INPUT);
    Serial.begin(9600);
-   pinMode(19, OUTPUT)
-   pinMode(18, INPUT);
-   pinMode(16, INPUT);
-   pinMode(15, INPUT);
-   pinMode(14, INPUT);
-   pinMode(13, INPUT);
-   pinMode(12, INPUT);
-   pinMode(11, OUTPUT);
-   pinMode(10, INPUT);
+   pinMode(przekaznik, OUTPUT)
+   pinMode(dalmierz, INPUT);
+   pinMode(therm, INPUT);
+   pinMode(fotoRes, INPUT);
+   pinMode(poten, INPUT);
+   pinMode(czujka, INPUT);
+   pinMode(darlington, INPUT);
+   pinMode(buzz, OUTPUT);
+   pinMode(button1, INPUT);
    
    lcd.begin(16, 2); //initialize the module 
    lcd.setRGB(60, 60, 200);                 //set the color  
@@ -70,6 +69,7 @@ int offTime = 0;
 int t = 0;
 
 //===
+bool tryb = false;
 int state = HIGH;
 int reading;
 int previous = LOW;
@@ -113,7 +113,7 @@ float lux() {
   return lx;
 }
 
-int dalmierz() {
+int dal() {
   int odl = analogRead(dal);
   odl = map(odl, 0, 1023, 0, 150);
   return odl;
@@ -168,56 +168,56 @@ void clearData()
   return;
 }
 
+void alarm() {
+	if (tryb = true && czujka == HIGH) {
+		digitalWrite(buzz, HIGH);
+		delay(1);
+		digitalWrite(buzz, LOW);
+		delay(1);
+	} else {
+		return;
+	}
+}
+
 void Menu() {
   if (customKey) {
     lcd.display();
     lcd.cursor();
   }
+  
   lcd.setCursor(0,0);
   lcd.print("Wprowadz haslo:");
   customKey = customKeypad.getKey();
+  
   if (customKey) {
     Data[data_count] = customKey; // store char into data array
     lcd.setCursor(data_count,1); // move cursor to show each new char
     lcd.print("*"); // print char at said cursor
     data_count++; // increment data array by 1 to store new char, also keep track of the 
   }
+  
   if ((data_count == Password_Lenght-1) && (!strcmp(Data, Master))) {
      int pot = analogRead(poten);
-     pot = map(pot, 0, 1023, 0, 4);     
+     pot = map(pot, 0, 1023, 0, 4); 
         switch(pot)
         {
         case 0:
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("Temperatura: ");
-        lcd.print(temps());
+        lcd.print("1. Wylacz alarm"");
         lcd.setCursor(0, 1);
-        lcd.print("Jasnosc: ");
-        lcd.print(lux());
+        lcd.print("2. Wlacz alarm");
         break;
         case 1:
         lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Grubas: ");
+        lcd.print("3. Temp. i jasn.");
+        lcd.print(temps());
         lcd.setCursor(0, 1);
-        lcd.print("Start ");
-        break;  
-        case 2:
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print(":::>");
-        lcd.setCursor(0, 1);
-        lcd.print("Herezja");
-        break; 
-        case 3:
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Maslo do ciecia");
-        lcd.setCursor(0, 1);
-        lcd.print("Pierogi z miesem");
-        break; 
+        lcd.print("4. Wyloguj");
+        lcd.print(lux());
+        break;
         }
+		
         if (customKey = NO_KEY) {
           t++;
           if (customKey) {
@@ -230,6 +230,30 @@ void Menu() {
             return;
           }
         }
+		switch (customKey)
+		{
+		case 1:
+		lcd.clear();
+		lcd.setCursor(0,0);
+		lcd.print("Wylaczono!");
+		tryb=false;
+		break;
+		case 2:
+		lcd.clear();
+		lcd.setCursor(0,0);
+		lcd.print("Wlaczono!");
+		tryb = true;
+		break;
+		case 3:
+		lcd.clear();
+		lcd.print(temps());
+		lcd.print("°C");
+		break;
+		case 4:
+		clearData();
+        lcd.noDisplay();
+        lcd.noCursor();
+		break;
     delay(1);
 }
 }

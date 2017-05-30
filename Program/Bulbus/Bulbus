@@ -1,7 +1,4 @@
-//Wykorzystane piny (oprócz 7)
-//11,10,9,8,14(A0),15(A1),16(A2),18(A4)
-
-#define przekaznik 11
+#define przekaznik 19
 #define darlington 12
 #define czujka 13
 #define poten 14
@@ -9,6 +6,7 @@
 #define therm 16
 #define dal 18
 #define button1 10
+#define buzz 11
 
 #include <Wire.h>
 #include <rgb_lcd.h>
@@ -21,20 +19,31 @@ const long menuInterval = 500;
 void setup() {
    pinMode(czujka, INPUT);
    Serial.begin(9600);
-   pinMode(14, INPUT);
-   pinMode(15, INPUT);
-   pinMode(16, INPUT);
+   pinMode(19, OUTPUT)
    pinMode(18, INPUT);
-   pinMode(11, INPUT);
+   pinMode(16, INPUT);
+   pinMode(15, INPUT);
+   pinMode(14, INPUT);
+   pinMode(13, INPUT);
+   pinMode(12, INPUT);
+   pinMode(11, OUTPUT);
    pinMode(10, INPUT);
-   pinMode(9, OUTPUT);
-   pinMode(8, INPUT);
    
    lcd.begin(16, 2); //initialize the module 
    lcd.setRGB(60, 60, 200);                 //set the color  
    lcd.setCursor(0, 0);                //set the position of cursor
-   lcd.print("ok.");
-   delay(500);  
+   lcd.print("Inicjowanie...");
+   delay(2300);
+   lcd.clear();
+   lcd.setCursor(0,0);
+   lcd.print("OK.");
+   delay(2000);
+   lcd.clear();
+   delay(1000);
+   lcd.setCursor(0,0);
+   lcd.print("Wprowadz haslo:");
+   delay(1000);
+   lcd.
 }
 
 void loop() {

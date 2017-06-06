@@ -1,4 +1,5 @@
 #define przekaznik 19
+#define przekaznik1 17
 #define darlington 12
 #define czujka 13
 #define poten 14
@@ -77,6 +78,9 @@ int b=20;
 void setup() {
    Serial.begin(9600);
    pinMode(przekaznik, OUTPUT);
+   pinMode(przekaznik1, OUTPUT);
+   digitalWrite(przekaznik, LOW);
+   digitalWrite(przekaznik1, LOW);
    pinMode(dalmierz, INPUT);
    pinMode(therm, INPUT);
    pinMode(fotoRes, INPUT);
@@ -182,12 +186,14 @@ float lux() {
   return lx;
 }
 
+//rangefinder
 int dal() {
   int odl = analogRead(dalmierz);
   odl = map(odl, 0, 1023, 0, 150);
   return odl;
 }
 
+//motion detection
 void ruch() {
   float darl = analogRead(darlington);
   unsigned long currentMillis1 = millis();
@@ -201,16 +207,14 @@ void ruch() {
   
   if (czujka==LOW && currentMillis1 - previousMillis1 >= timeInterval) {
     offTime++;
-  } else {
-    return;
   }
     
   if (czujka==LOW && offTime >3 && darl>=treshold && sec >=120 ) {
     digitalWrite(przekaznik, LOW);
+    digitalWrite(przekaznik1, LOW);
+    
     sec = 0;
     offTime = 0;
-  } else {
-    digitalWrite(przekaznik,HIGH);
   }
   if(reading == HIGH && previous == LOW && millis() - timer > debounce) {
     if (state == HIGH)  {
@@ -221,6 +225,7 @@ void ruch() {
     timer = millis();
     }
   digitalWrite(przekaznik, state);
+  digitalWrite(przekaznik1, state);
   previous = reading;
   }
 }
@@ -239,6 +244,7 @@ void clearData()
   return;
 }
 
+//alarm ringing
 void alarm() {
   if (tryb == true && czujka == HIGH) {
     digitalWrite(buzz, HIGH);
@@ -282,7 +288,7 @@ void Menu() {
         case 3:
         lcd.clear();
         lcd.setCursor(0,0);
-        lcd.print("5. Wyloguj");
+        lcd.print("5. Logout");
         break;
         }
       customKey = customKeypad.getKey();

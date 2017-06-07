@@ -1,13 +1,17 @@
-#define przekaznik 19
-#define przekaznik1 17
+#define przekaznik 23
+#define przekaznik1 22
 #define darlington 12
 #define czujka 13
-#define poten 14
-#define fotoRes 15
-#define therm 16
-#define dalmierz 18
+#define poten A0
+#define fotoRes A1
+#define therm A2
+#define dalmierz A4
 #define button1 7
+#define button2 24
 #define buzz 8
+#define led1
+#define led2
+#define led3
 
 #include <Wire.h>
 #include <rgb_lcd.h>
@@ -110,6 +114,15 @@ void loop() {
   login();
   }
 
+  if (button2 == HIGH) {
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Wlaczono!");
+    tryb = true;
+  }
+
+  alarm();
+  
   if(success1==true){
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= menuInterval) {
@@ -157,12 +170,32 @@ customKey = customKeypad.getKey();
       lcd.print("Zalogowano");
       success1 = true;
       t=0;
-      delay(1000);
+      for(int i=0; i<5; i++){
+    digitalWrite(buzz, HIGH);
+    delay(1);
+    digitalWrite(buzz, LOW);
+    delay(1);
+    }
+      digitalWrite(led1, HIGH);
+      delay(200);
+      digitalWrite(led1, LOW);
+      delay(75);
+      digitalWrite(led1, HIGH);
+      delay(200);
+      digitalWrite(led1, LOW);
+      delay(500);
     } else {
       lcd.print("Zle haslo");
       success1 = false;
       clearData();
-      delay(1000);
+      digitalWrite(led3, HIGH);
+      delay(200);
+      digitalWrite(led3, LOW);
+      delay(75);
+      digitalWrite(led3, HIGH);
+      delay(200);
+      digitalWrite(led3, LOW);
+      delay(500);
     }
         lcd.clear(); 
   }
@@ -247,10 +280,12 @@ void clearData()
 //alarm ringing
 void alarm() {
   if (tryb == true && czujka == HIGH) {
+    for(int i=0; i<30; i++){
     digitalWrite(buzz, HIGH);
     delay(1);
     digitalWrite(buzz, LOW);
     delay(1);
+    }
   } else {
     return;
   }
@@ -276,6 +311,15 @@ void Menu() {
         lcd.print(temps());
         lcd.write((unsigned char)0);
         lcd.print("C");
+        if (temps()<=13) {
+          lcd.setRGB(20,20,220);
+        }
+        if (temps()>13 && temps()<23) {
+          lcd.setRGB(20,220,20);
+        }
+        if (temps()>=23) {
+          lcd.setRGB(220,20,20);
+        }
         break;
         case 2:
         lcd.clear();
@@ -314,12 +358,28 @@ void Menu() {
     lcd.setCursor(0,0);
     lcd.print("Wylaczono!");
     tryb=false;
+    digitalWrite(led1, HIGH);
+      delay(200);
+      digitalWrite(led1, LOW);
+      delay(75);
+      digitalWrite(led1, HIGH);
+      delay(200);
+      digitalWrite(led1, LOW);
+      delay(75);
     return;
     case '2':
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Wlaczono!");
     tryb = true;
+    digitalWrite(led1, HIGH);
+      delay(200);
+      digitalWrite(led1, LOW);
+      delay(75);
+      digitalWrite(led1, HIGH);
+      delay(200);
+      digitalWrite(led1, LOW);
+      delay(75);
     return;
     case '5':
     clearData();
